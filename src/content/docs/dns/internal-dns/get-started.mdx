@@ -79,11 +79,20 @@ TBD > add partial with requirements from Setup page
 3. Create an expression for the traffic you wish to route. For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 4. Select **Use DNS view** and choose from the dropdown the name of the view that the query should be sent to.
 5. (Optional) Adjust the option to **fallback through public DNS** according to your use case.
+6. Select **Save policy** to confirm.
 
 </TabItem> <TabItem label="API">
 
-Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to setup resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option.
+Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option.
 
 For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 
 </TabItem> </Tabs>
+
+The internal DNS queries can be sent using different configurations:
+
+- Via [WARP](/cloudflare-one/connections/connect-devices/warp/).
+- Using any of the DNS endpoints supported with [DNS locations](/cloudflare-one/connections/connect-devices/agentless/dns/locations/).
+- With any of the available [Magic WAN on-ramps](/magic-wan/on-ramps/).
+
+Refer to [connectivity](/dns/internal-dns/setup/connectivity/) for further context.
