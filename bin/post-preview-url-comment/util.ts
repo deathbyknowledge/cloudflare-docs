@@ -15,25 +15,23 @@ export const filenameToPath = (filename: string) => {
 		segments.splice(changelogIdx + 1, 1);
 	}
 
-	return [
-		...segments
-			.flatMap((segment) => {
-				if (segment === "docs") {
-					return [];
-				}
+	return segments
+		.flatMap((segment) => {
+			if (segment === "docs") {
+				return [];
+			}
 
-				const slugified = slug(segment);
+			const slugified = slug(segment);
 
-				if (slugified === "1111") {
-					return "1.1.1.1";
-				}
+			if (slugified === "1111") {
+				return "1.1.1.1";
+			}
 
-				return slugified;
-			})
-			.join("/")
-			.replace(/\/index$/, ""),
-		"/",
-	];
+			return slugified;
+		})
+		.join("/")
+		.replace(/\/index$/, "")
+		.concat("/");
 };
 
 export const branchToSubdomain = (branch: string) => {
