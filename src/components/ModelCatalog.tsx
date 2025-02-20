@@ -94,7 +94,7 @@ const ModelCatalog = ({ models }: { models: WorkersAIModelsSchema[] }) => {
 			<div className="mr-8 w-full md:w-1/4">
 				<input
 					type="text"
-					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white px-2 py-2 dark:border-gray-700 dark:bg-gray-800"
+					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800"
 					placeholder="Search models"
 					value={filters.search}
 					onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -233,11 +233,11 @@ const ModelCatalog = ({ models }: { models: WorkersAIModelsSchema[] }) => {
 										alt={`${authorInfo.name} logo`}
 									/>
 								) : (
-									<div className="mr-2 flex h-6 w-6 items-center justify-center rounded-md bg-gray-100 text-sm font-black uppercase text-gray-400">
+									<div className="mr-2 flex size-6 items-center justify-center rounded-md bg-gray-100 text-sm font-black uppercase text-gray-400">
 										{author.slice(0, 1)}
 									</div>
 								)}
-								<span className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold">
+								<span className="truncate text-lg font-semibold">
 									{model.model_display_name}
 								</span>
 								{isBeta && <span className="sl-badge caution ml-1">Beta</span>}

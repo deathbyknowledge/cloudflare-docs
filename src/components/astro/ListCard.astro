@@ -3,6 +3,7 @@ import { Card } from "@astrojs/starlight/components";
 export type Props = Parameters<typeof Card>[0];
 ---
 
+{/* eslint-disable tailwindcss/no-custom-classname */}
 <Card {...Astro.props}>
 	<div class="link-list">
 		<slot />

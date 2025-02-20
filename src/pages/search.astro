@@ -3,6 +3,7 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 import "instantsearch.css/themes/satellite.css";
 ---
 
+{/* eslint-disable tailwindcss/no-custom-classname */}
 <StarlightPage frontmatter={{ title: "Search", template: "splash" }}>
 	<div class="search-panel__results not-content">
 		<div id="searchbox"></div>

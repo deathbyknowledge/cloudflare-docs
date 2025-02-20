@@ -77,7 +77,7 @@ const FieldCatalog = ({ fields }: { fields: Fields }) => {
 			<div className="mr-8 w-full md:w-1/4">
 				<input
 					type="text"
-					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white px-2 py-2 dark:border-gray-700 dark:bg-gray-800"
+					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800"
 					placeholder="Search fields"
 					value={filters.search}
 					onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -136,7 +136,7 @@ const FieldCatalog = ({ fields }: { fields: Fields }) => {
 						>
 							<div className="-mb-1 flex items-center">
 								<span
-									className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold"
+									className="truncate text-lg font-semibold"
 									title={`${field.name}: ${field.data_type}`}
 								>
 									{field.name}

@@ -1,3 +1,5 @@
+import pluginUnicorn from "eslint-plugin-unicorn";
+import pluginTailwind from "eslint-plugin-tailwindcss";
 import pluginJavaScript from "@eslint/js";
 import pluginTypeScript from "typescript-eslint";
 import pluginReact from "eslint-plugin-react";
@@ -12,6 +14,26 @@ export default [
 		languageOptions: {
 			globals: {
 				...globals.node,
+			},
+		},
+	},
+	pluginUnicorn.configs.recommended,
+	...pluginTailwind.configs["flat/recommended"],
+	{
+		settings: {
+			tailwindcss: {
+				whitelist: [
+					"not-content",
+					"sl-hidden",
+					"sl-flex",
+					"sl-markdown-content",
+					"feedback-prompt",
+					"bleed",
+					"gray",
+					"live-code-layout",
+					"tryit-sidebar",
+					"tryit-code",
+				],
 			},
 		},
 	},
@@ -31,6 +53,7 @@ export default [
 	{
 		rules: {
 			"no-var": "error",
+			"unicorn/prevent-abbreviations": "off",
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-unused-vars": [
 				"error",

@@ -125,16 +125,16 @@ const starlightPageProps = {
 ---
 
 <StarlightPage {...starlightPageProps}>
-	<div class="align-center flex">
+	<div class="flex items-center">
 		{
 			author ? (
 				<img
-					class="mr-4 block h-12 w-12"
+					class="mr-4 block size-12"
 					src={author.logo}
 					alt={`${author.name} logo`}
 				/>
 			) : (
-				<div class="mr-4 flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-2xl font-black uppercase text-gray-400">
+				<div class="mr-4 flex size-12 items-center justify-center rounded-md bg-gray-100 text-2xl font-black uppercase text-gray-400">
 					{model.name.split("/")[1].substring(0, 1)}
 				</div>
 			)

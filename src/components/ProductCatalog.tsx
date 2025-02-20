@@ -59,7 +59,7 @@ const ProductCatalog = ({ products }: { products: ProductData[] }) => {
 			<div className="mr-8 w-full md:w-1/4">
 				<input
 					type="text"
-					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white px-2 py-2 dark:border-gray-700 dark:bg-gray-800"
+					className="mb-8 w-full rounded-md border-2 border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800"
 					placeholder="Search products"
 					value={filters.search}
 					onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -128,11 +128,11 @@ const ProductCatalog = ({ products }: { products: ProductData[] }) => {
 									</div>
 								)}
 								{!product.icon && (
-									<div className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-orange-50 p-1 text-lg font-bold leading-none text-[color:var(--orange-accent-200)] dark:bg-orange-950">
+									<div className="mr-2 flex size-8 items-center justify-center rounded-full bg-orange-50 p-1 text-lg font-bold leading-none text-[color:var(--orange-accent-200)] dark:bg-orange-950">
 										{product.data.name.substr(0, 1)}
 									</div>
 								)}
-								<span className="text-md mt-0.5 font-semibold">
+								<span className="mt-0.5 font-semibold">
 									{product.data.name}
 								</span>
 							</div>

@@ -11,12 +11,12 @@ const links = Object.entries({
 });
 ---
 
-<div class="items-center hidden lg:flex mx-auto">
+<div class="mx-auto hidden items-center lg:flex">
 	{
 		links.map(([text, href]) => (
 			<a
 				href={href}
-				class="px-4 no-underline text-[--sl-color-text] font-medium"
+				class="px-4 font-medium text-[--sl-color-text] no-underline"
 			>
 				<span>{text}</span>
 			</a>

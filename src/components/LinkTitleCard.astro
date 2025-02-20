@@ -12,6 +12,7 @@ interface Props {
 const { icon, title, href, ...attrs } = Astro.props;
 ---
 
+{/* eslint-disable tailwindcss/no-custom-classname */}
 <article class="card sl-flex" {...attrs}>
 	<p class="title sl-flex">
 		{icon && <Icon name={icon} class="icon" size="1.333em" />}
