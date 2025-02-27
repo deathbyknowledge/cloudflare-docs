@@ -21,13 +21,13 @@ Simplify private network management with Cloudflare DNS for your internal resour
 
 <Plan type="enterprise" />
 
-Manage DNS records that should only be accessible within your private network. Internal DNS [zones](/dns/internal-dns/internal-zones/) and [views](/dns/internal-dns/dns-views/) pair up with [Gateway resolver policies](/cloudflare-one/policies/gateway/resolver-policies/) so that you can control how a DNS query should be responded according to context, such as its source IP.
+Manage DNS records that should only be accessible within your private network. Internal DNS [zones](/dns/internal-dns/internal-zones/) and [views](/dns/internal-dns/dns-views/) pair up with [Gateway resolver policies](/cloudflare-one/policies/gateway/resolver-policies/) so that you can control how a DNS query should be responded to according to the query context, such as its source IP.
 
 <Render file="internal-dns-beta-note" />
 
 ## Architecture overview
 
-Internal DNS queries can only be resolved via Cloudflare Gateway, which acts as an interface between the client and Internal DNS views.
+Internal DNS queries can only be resolved via the Cloudflare Gateway resolver, which acts as an interface between the DNS client and Internal DNS zones.
 
 To connect to Cloudflare, you can use [WARP](/cloudflare-one/connections/connect-devices/warp/), any of the DNS endpoints supported with [DNS locations](/cloudflare-one/connections/connect-devices/agentless/dns/locations/), or [Magic WAN on-ramps](/magic-wan/on-ramps/).
 

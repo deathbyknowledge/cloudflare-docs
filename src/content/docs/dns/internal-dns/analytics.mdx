@@ -11,10 +11,10 @@ Besides using [Gateway analytics](/cloudflare-one/insights/analytics/gateway/) f
 
 For detailed metrics, use the [GraphQL API](/analytics/graphql-api/). Refer to the GraphQL Analytics API documentation for guidance on how to [get started](/analytics/graphql-api/getting-started/).
 
-The [schemas](/analytics/graphql-api/getting-started/querying-basics/) added to cover Internal DNS are the following:
+The [fields](/analytics/graphql-api/getting-started/querying-basics/) added to cover Internal DNS are the following:
 
 - `InternalDNSFallbackStrategy`: The fallback strategy applied to the internal DNS response. Empty if no fallback strategy was applied.
-- `InternalDNSRCode`: The return code sent back by the internal DNS service.
+- `InternalDNSRCode`: The response code sent back by the internal DNS service.
 - `InternalDNSViewID`: The view identifier that was sent to the internal DNS service.
 - `InternalDNSZoneID`: The internal zone identifier returned by the internal DNS service.
 
