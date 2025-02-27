@@ -13,7 +13,7 @@ head:
     content: Internal DNS
 ---
 
-import { Render, Description, Plan, RelatedProduct, DirectoryListing, GlossaryTooltip } from "~/components";
+import { Render, Description, Plan, RelatedProduct, DirectoryListing, GlossaryTooltip, Example } from "~/components";
 
 <Description>
 Simplify private network management with Cloudflare DNS for your internal resources.
@@ -27,7 +27,7 @@ Manage DNS records that should only be accessible within your private network. I
 
 ## Architecture overview
 
-Internal DNS queries can only be resolved via the Cloudflare Gateway resolver, which acts as an interface between the DNS client and Internal DNS zones.
+Internal DNS queries can only be resolved via the Cloudflare Gateway resolver, which acts as an interface between the DNS client and internal DNS zones.
 
 To connect to Cloudflare, you can use [WARP](/cloudflare-one/connections/connect-devices/warp/), any of the DNS endpoints supported with [DNS locations](/cloudflare-one/connections/connect-devices/agentless/dns/locations/), or [Magic WAN on-ramps](/magic-wan/on-ramps/).
 
@@ -56,7 +56,49 @@ flowchart LR
 				C --Query--> Y
 ```
 
-Each DNS view is a logical grouping of internal DNS zones. Internal DNS zones can either contain the <GlossaryTooltip term="DNS record" link="/dns/manage-dns-records/">DNS records</ GlossaryTooltip> that should be used to resolve an internal DNS query or reference another internal zone that contains such records.
+Each DNS view is a logical grouping of internal DNS zones.
+
+```mermaid
+flowchart LR
+        accTitle: Internal DNS views and zones
+        accDescr: Diagram exemplifying Internal DNS views and zones relationship
+        subgraph Internal DNS
+        subgraph View 111 - London
+        Y[example.local <br /> Zone 200]
+				Z[local <br /> Zone 201]
+        end
+        subgraph View 110 - San Francisco
+        X[example.com <br /> Zone 301]
+				B[example.local <br /> Zone 300]
+				S[com <br /> Zone 302]
+        end
+				W[net <br /> Zone 501]
+				end
+```
+
+Internal DNS zones contain the <GlossaryTooltip term="DNS record" link="/dns/manage-dns-records/">DNS records</ GlossaryTooltip> that should be used to resolve an internal DNS query. Also, if no internal record is found within a matching internal zone, Cloudflare will check if the matching internal zone is [referencing another internal zone](/dns/internal-dns/internal-zones/#reference-zones).
+
+<Example>
+
+```mermaid
+flowchart LR
+        accTitle: Internal DNS zones and internal records
+        accDescr: Diagram exemplifying Internal DNS zones and records relationship
+        subgraph View 111 - London
+				subgraph Zone 201 - local
+				S[@ A 192.0.2.10]
+				T[ghi.example A 192.0.2.15]
+				end
+        subgraph Zone 200 - example.local
+				X[@ A 192.0.2.1]
+				Y[abc A 192.0.2.6]
+				Z[def A 192.0.2.9]
+				end
+				end
+```
+In this example, a query for `ghi.example.local` routed to view ID 111 would go to zone 200, which presents the longest matching zone name (`example.local`). Zone 200 does not contain a record for `ghi` but, if it is referencing zone 201, Cloudflare will then look for the queried record within the reference zone.
+
+</Example>
 
 ## Resources
 
