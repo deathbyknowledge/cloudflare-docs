@@ -16,6 +16,7 @@ Although there are some steps that can be achieved on the dashboard, currently t
 <Render file="internal-dns-beta-note" />
 
 - Make sure you have an Enterprise account with access to [Gateway resolver policies](/cloudflare-one/policies/gateway/resolver-policies/) and [Internal DNS](/dns/internal-dns/).
+- Consider the different ways in which you can [connect to Gateway resolver](/dns/internal-dns/connectivity/).
 - If you are not familiar with how to use Cloudflare API, refer to [Fundamentals](/fundamentals/api/get-started/).
 - If you will be using an API token for authentication, make sure you have the following permissions:
 
@@ -90,21 +91,11 @@ Besides selecting an internal DNS view when setting up your resolver policies, y
 
 </TabItem> <TabItem label="API">
 
-Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option.
+Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option. The fallback options behave as follows:
 
-- `"fallback": "none"`: Gateway DNS resolver returns the response as-is to the client.
-- `"fallback": "public_dns"`: In case the response from the internal zone is REFUSED, NXDOMAIN, or a response with a CNAME type, Gateway DNS resolver sends the query to Cloudflare 1.1.1.1 public resolver and tries to resolve the query via public DNS.
+- `none`: Gateway DNS resolver returns the response as-is to the client.
+- `public_dns`: In case the response from the internal zone is REFUSED, NXDOMAIN, or a response with a CNAME type, Gateway DNS resolver sends the query to Cloudflare 1.1.1.1 public resolver and tries to resolve the query via public DNS.
 
 For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 
 </TabItem> </Tabs>
-
----
-
-## Connectivity
-
-The internal DNS queries can be sent using different configurations:
-
-- Via [WARP](/cloudflare-one/connections/connect-devices/warp/).
-- Using any of the DNS endpoints supported with [DNS locations](/cloudflare-one/connections/connect-devices/agentless/dns/locations/).
-- With any of the available [Magic WAN on-ramps](/magic-wan/on-ramps/).
