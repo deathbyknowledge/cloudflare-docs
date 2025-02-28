@@ -62,7 +62,7 @@ Although there are some steps that can be achieved on the dashboard, currently t
 
 ## 2. Link your internal zone to a view
 
-Since the resolver policy will require a [view](/dns/internal-dns/dns-views/), you must have at least one view to be able to route requests to internal zones.
+Since the resolver policy will require a [DNS view](/dns/internal-dns/dns-views/), you must have at least one view to be able to route requests to internal zones.
 
 1. Use the [Create Internal DNS View](/api/resources/dns/subresources/settings/subresources/views/methods/create/) endpoint. For each view you create, list all the internal zones that should be grouped under that view.
 
@@ -91,11 +91,11 @@ Besides selecting an internal DNS view when setting up your resolver policies, y
 
 </TabItem> <TabItem label="API">
 
-Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option. The fallback options behave as follows:
+Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
+
+Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option. The fallback options behave as follows:
 
 - `none`: Gateway DNS resolver returns the response as-is to the client.
 - `public_dns`: In case the response from the internal zone is REFUSED, NXDOMAIN, or a response with a CNAME type, Gateway DNS resolver sends the query to Cloudflare 1.1.1.1 public resolver and tries to resolve the query via public DNS.
-
-For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 
 </TabItem> </Tabs>
