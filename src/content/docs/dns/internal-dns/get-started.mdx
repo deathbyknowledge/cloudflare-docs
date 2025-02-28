@@ -53,7 +53,7 @@ Although there are some steps that can be achieved on the dashboard, currently t
 
 ### (Optional) Reference a zone from another zone
 
-1. Use the [Update DNS settings](/api/resources/dns/subresources/settings/methods/edit/) endpoint to add a reference from an internal zone to another internal zone. In `--data`, specify the `internal_dns` object with the parameter `reference_zone_id`. For details, refer to [Manage internal zones](/dns/internal-dns/internal-zones/#reference-zones).
+1. Use the [Update DNS settings](/api/resources/dns/subresources/settings/methods/edit/) endpoint to add a reference from an internal zone to another internal zone. In `--data`, specify the `internal_dns` object with the parameter `reference_zone_id`. For details, refer to [reference zones](/dns/internal-dns/internal-zones/#reference-zones).
 
 <Example>
 <Render file="internal-reference-zone-api"/>
@@ -70,6 +70,10 @@ Since the resolver policy will require a [view](/dns/internal-dns/dns-views/), y
 </Details>
 
 ## 3. Configure Gateway policies
+
+:::note
+The Gateway configuration must exist within the same Cloudflare account where the internal zone exists.
+:::
 
 Besides selecting an internal DNS view when setting up your resolver policies, you can also enable the **fallback through public DNS** option.
 
