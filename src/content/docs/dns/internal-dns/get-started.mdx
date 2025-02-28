@@ -71,6 +71,8 @@ Since the resolver policy will require a [view](/dns/internal-dns/dns-views/), y
 
 ## 3. Configure Gateway policies
 
+Besides selecting an internal DNS view when setting up your resolver policies, you can also enable the **fallback through public DNS** option.
+
 <Tabs syncKey="dashPlusAPI"> <TabItem label="Dashboard">
 
 1. In [Zero Trust](https://one.dash.cloudflare.com/), go to **Gateway** > **Resolver policies**.
@@ -78,15 +80,24 @@ Since the resolver policy will require a [view](/dns/internal-dns/dns-views/), y
 3. Create an expression for the traffic you wish to route. For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 4. Select **Use DNS view**. In the dropdown, choose the view that queries matching the expression should be sent to.
 5. (Optional) Adjust the option to **fallback through public DNS** according to your use case.
+- Off: Gateway DNS resolver returns the response as-is to the client.
+- On: In case the response from the internal zone is REFUSED, NXDOMAIN, or a response with a CNAME type, Gateway DNS resolver sends the query to Cloudflare 1.1.1.1 public resolver and tries to resolve the query via public DNS.
 6. Select **Create policy** to confirm.
 
 </TabItem> <TabItem label="API">
 
 Use the API endpoints under [Zero Trust > Gateway > Rules](/api/resources/zero_trust/subresources/gateway/subresources/rules/) to set up resolver policies. Use the rule settings object to define `resolve_dns_internally`, specifying `view_id` and `fallback` option.
 
+- `"fallback": "none"`: Gateway DNS resolver returns the response as-is to the client.
+- `"fallback": "public_dns"`: In case the response from the internal zone is REFUSED, NXDOMAIN, or a response with a CNAME type, Gateway DNS resolver sends the query to Cloudflare 1.1.1.1 public resolver and tries to resolve the query via public DNS.
+
 For guidance about selectors, operators, and values, refer to [Gateway](/cloudflare-one/policies/gateway/resolver-policies/#selectors).
 
 </TabItem> </Tabs>
+
+---
+
+## Connectivity
 
 The internal DNS queries can be sent using different configurations:
 
