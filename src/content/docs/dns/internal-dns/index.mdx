@@ -27,9 +27,9 @@ Manage DNS records that should only be accessible within your private network. I
 
 ## Architecture overview
 
-Internal DNS queries can only be resolved via the Cloudflare Gateway resolver, which acts as an interface between the DNS client and internal DNS zones.
+You can use different [connectivity options](/dns/internal-dns/connectivity/) to on-ramp your traffic to Cloudflare. Then, Cloudflare Gateway resolver acts as an interface between the DNS client and internal DNS zones.
 
-{/*To connect to Cloudflare, you can use [WARP](/cloudflare-one/connections/connect-devices/warp/), any of the DNS endpoints supported with [DNS locations](/cloudflare-one/connections/connect-devices/agentless/dns/locations/), or [Magic WAN on-ramps](/magic-wan/on-ramps/).*/}
+Internal DNS zones do not get assigned Cloudflare nameservers and can only be queried via Cloudflare Gateway resolver.
 
 ```mermaid
 flowchart LR
