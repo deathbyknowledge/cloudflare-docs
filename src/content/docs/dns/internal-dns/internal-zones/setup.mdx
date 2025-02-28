@@ -3,14 +3,11 @@ pcx_content_type: how-to
 title: Manage internal zones
 sidebar:
   order: 2
-  label: Internal zones
 ---
 
 import { Example, Render } from "~/components";
 
-Internal DNS zones are groupings of internal DNS records. While [public DNS records](/dns/manage-dns-records/) contain information about resources that you want to make available to the public Internet, internal DNS records allow you to manage resources that should only be available within your private network.
-
-Internal DNS zones do not get assigned Cloudflare nameservers and can only be queried via [Cloudflare Gateway](/cloudflare-one/policies/gateway/resolver-policies/) when linked to a [DNS view](/dns/internal-dns/dns-views/). The Gateway configuration must exist within the same Cloudflare account where the internal zone exists.
+Refer to the following sections to learn how to manage your internal DNS zones.
 
 ## Configuration conditions
 
@@ -28,28 +25,6 @@ When setting up internal zones, observe the following conditions:
 
 Since the resolver policy configuration will require a view, you must link the internal zones to at least one view to be able to use them when routing requests to Internal DNS. For a full procedure overview, refer to [get started](/dns/internal-dns/get-started/).
 
-## Reference zones
-
-### How it works
-
-During an [internal DNS query resolution](/dns/internal-dns/#architecture-overview), if no internal record is found within a matching internal zone, Cloudflare will check if the matching internal zone is referencing another internal zone.
-
-Successive references can be followed with a maximum of five references in a chain.
-
-### Setup
-
-To set up a reference zone, use the [Update DNS settings](/api/resources/dns/subresources/settings/methods/edit/) endpoint. In `--data`, specify the `internal_dns` object with the parameter `reference_zone_id`.
-
-Each internal zone can only reference one other zone, but the same zone can be referenced by multiple internal zones.
-
-Public zones cannot be used as reference zones.
-
-<Example>
-<Render file="internal-reference-zone-api"/>
-
-A third zone (C) could also point to zone B as a reference, but zone A cannot add another zone as a reference while also having zone B configured as its reference zone.
-
-</ Example>
 
 ## Other actions
 
