@@ -64,15 +64,15 @@ flowchart LR
         accDescr: Diagram exemplifying Internal DNS views and zones relationship
         subgraph Internal DNS
         subgraph View 111 - London
-        Y[example.local <br /> Zone 200]
-				Z[local <br /> Zone 201]
+        Y[Zone 600 <br /> example.local]
+				Z[Zone 601 <br /> local]
         end
         subgraph View 110 - San Francisco
-        X[example.com <br /> Zone 301]
-				B[example.local <br /> Zone 300]
-				S[com <br /> Zone 302]
+        X[Zone 101 <br /> example.com]
+				B[Zone 100 <br /> example.local]
+				S[Zone 102 <br /> com]
         end
-				W[net <br /> Zone 501]
+				W[Zone 701 <br /> net]
 				end
 ```
 
@@ -85,18 +85,18 @@ flowchart LR
         accTitle: Internal DNS zones and internal records
         accDescr: Diagram exemplifying Internal DNS zones and records relationship
         subgraph View 111 - London
-				subgraph Zone 201 - local
+				subgraph Zone 601 - local
 				S[@ A 192.0.2.10]
 				T[ghi.example A 192.0.2.15]
 				end
-        subgraph Zone 200 - example.local
+        subgraph Zone 600 - example.local
 				X[@ A 192.0.2.1]
 				Y[abc A 192.0.2.6]
 				Z[def A 192.0.2.9]
 				end
 				end
 ```
-In this example, a query for `ghi.example.local` routed to view ID 111 would go to zone 200, which presents the longest matching zone name (`example.local`). Zone 200 does not contain a record for `ghi` but, if it is referencing zone 201, Cloudflare will then look for the queried record within the reference zone.
+In this example, a query for `ghi.example.local` routed to view ID 111 would go to zone 600, which presents the longest matching zone name (`example.local`). Zone 600 does not contain a record for `ghi` but, if it is referencing zone 601, Cloudflare will then look for the queried record within the reference zone.
 
 </Example>
 
