@@ -6,6 +6,7 @@ sidebar:
 head:
   - tag: title
     content: HTTP request header modification rules
+  description: Learn to modify HTTP request headers with Cloudflare's rules. Set, overwrite, or remove headers via dashboard or API. Understand limitations and best practices.
 ---
 
 import { Render } from "~/components";
@@ -46,7 +47,6 @@ You can create an HTTP request header modification rule [in the dashboard](/rule
 	file="snippets-alternative"
 	params={{ suffix: "request header modifications" }}
 />
-
 ## Important remarks
 
 - You cannot modify or remove HTTP request headers whose name starts with `x-cf-` or `cf-` except for the `cf-connecting-ip` HTTP request header, which you can remove.
