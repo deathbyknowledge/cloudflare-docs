@@ -1,16 +1,4 @@
----
-pcx_content_type: how-to
-title: Ansible
-sidebar:
-  order: 1
----
-
-import { Render } from "~/components";
-
-Ansible is a software tool that enables at scale management of infrastructure. Ansible is agentless — all it needs to function is the ability to SSH to the target and Python installed on the target.
-
-Ansible works alongside Terraform to streamline the Cloudflare Tunnel setup process. In this guide, you will use Terraform to deploy an SSH server on Google Cloud and create a [locally-managed tunnel](/cloudflare-one/connections/connect-networks/do-more-with-tunnels/local-management/create-local-tunnel/) that makes the server available over the Internet. Terraform will automatically run an Ansible playbook that installs and configures `cloudflared` on the server.
-
+---\npcx_content_type: how-to\ntitle: Ansible\ndescription: Learn how to deploy a Cloudflare Tunnel using Ansible and Terraform on Google Cloud. This guide covers installation, configuration, and testing steps.\nsidebar:\n  order: 1\n---\n\nimport { Render } from "~/components";\n\nAnsible is a software tool that enables at scale management of infrastructure. Ansible is agentless — all it needs to function is the ability to SSH to the target and Python installed on the target.\n\nAnsible works alongside Terraform to streamline the Cloudflare Tunnel setup process. In this guide, you will use Terraform to deploy an SSH server on Google Cloud and create a [locally-managed tunnel](/cloudflare-one/connections/connect-networks/do-more-with-tunnels/local-management/create-local-tunnel/) that makes the server available over the Internet. Terraform will automatically run an Ansible playbook that installs and configures `cloudflared` on the server.\n
 ## Prerequisites
 
 To complete the steps in this guide, you will need:
