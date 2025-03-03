@@ -75,7 +75,7 @@ To determine if it is safe to enable an adaptive rule in mitigation:
 - If no packets match the rule (in the last 7 days or 24 hours), you should consider changing the rule from `log` to `block`.
 - If packets do match the rule, verify that the traffic matches and decide if it is valid. 
 
-The default rule action for `log` with a sensitivity set to `high` will only show packets with suspected attack traffic over internal `high` thresholds in your logs. For instance, if you set the threshold to `medium` or `low` then only packets over those thresholds will be logged.
+The default rule action for `log` with a sensitivity set to `high` will only show packets with suspected attack traffic over internal `high` thresholds in your logs. For instance, if you set the threshold to `medium` or `low`, then only packets over those thresholds will be logged.
 
 ## Configure the rules
 
