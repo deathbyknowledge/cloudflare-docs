@@ -93,14 +93,34 @@ example.com. 300 IN TXT "v=spf1 include:_spf.mx.cloudflare.net ~all"
 
 [The MX (mail exchange) records](https://www.cloudflare.com/learning/dns/dns-records/dns-mx-record/) tell the Internet where the inbound servers receiving email messages for the zone are. In this case, anyone who wants to send an email to `example.com` can use the `amir.mx.cloudflare.net`, `linda.mx.cloudflare.net`, or `isaac.mx.cloudflare.net` SMTP servers.
 
+### Outbound prefixes
+
+Email Routing sends its traffic using both IPv4 and IPv6 prefixes, when supported by the upstream SMTP server.
+
+If you are a postmaster and are having trouble receiving Email Routing's emails, allow the following outbound IP addresses in your server configuration:
+
+**IPv4**
+
+`104.30.0.0/19`
+
+**IPv6**
+
+`2405:8100:c000::/38`
+
+_Ranges last updated: December 13th, 2023_
+
 ### Outbound hostnames
 
-In addition to the outbound prefixes, Email Routing will use the domain `email.cloudflare.net` for the `HELO/EHLO` command.
+In addition to the outbound prefixes, Email Routing will use the following outbound domains for the `HELO/EHLO` command:
+
+- `cloudflare-email.net`
+- `cloudflare-email.org`
+- `cloudflare-email.com`
 
 PTR records (reverse DNS) ensure that each hostname has an corresponding IP. For example:
 
 ```sh
-dig a0-7.email.cloudflare.net +short
+dig a-h.cloudflare-email.net +short
 ```
 
 ```sh output
@@ -112,24 +132,8 @@ dig -x 104.30.0.7 +short
 ```
 
 ```sh output
-a0-7.email.cloudflare.net.
+a-h.cloudflare-email.net.
 ```
-
-### Outbound prefixes
-
-Email Routing sends its traffic using both IPv4 and IPv6 prefixes, when supported by the upstream SMTP server.
-
-If you are a postmaster and are having trouble receiving Email Routing's emails, allow the following outbound IP addresses in your server configuration:
-
-**IPv4**
-
-`104.30.0.0/20`
-
-**IPv6**
-
-`2405:8100:c000::/38`
-
-_Ranges last updated: December 13th, 2023_
 
 ### Sender rewriting
 
