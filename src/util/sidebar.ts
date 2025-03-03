@@ -1,7 +1,7 @@
 import type { AstroGlobal } from "astro";
 import type { Props } from "@astrojs/starlight/props";
 
-import { getEntry } from "astro:content";
+import { getEntry, getCollection } from "astro:content";
 import { rehypeExternalLinksOptions } from "~/plugins/rehype/external-links";
 
 type Link = Extract<Props["sidebar"][0], { type: "link" }> & { order?: number };
@@ -12,11 +12,12 @@ type Group = Extract<Props["sidebar"][0], { type: "group" }> & {
 export type SidebarEntry = Link | Group;
 type Badge = Link["badge"];
 
+const products = await getCollection("products");
 const sidebars = new Map<string, Group>();
 
 export async function getSidebar(context: AstroGlobal<Props>) {
 	const pathname = context.url.pathname;
-	const segments = pathname.split("/").slice(1, -1);
+	const segments = pathname.split("/").filter(Boolean);
 
 	const product = segments.at(0);
 
@@ -88,6 +89,33 @@ export async function generateSidebar(group: Group) {
 		group.entries[0].label = "Overview";
 	}
 
+	const product = products.find((p) => p.id === group.label);
+	if (product && product.data.product.group === "Developer platform") {
+		const links = [
+			["llms.txt", "/llms.txt"],
+			["prompt.txt", "/workers/prompt.txt"],
+			[`${product.data.name} llms-full.txt`, `/${product.id}/llms-full.txt`],
+			["Developer Platform llms-full.txt", "/developer-platform/llms-full.txt"],
+		];
+
+		group.entries.push({
+			type: "group",
+			label: "LLM resources",
+			entries: links.map(([label, href]) => ({
+				type: "link",
+				label,
+				href,
+				isCurrent: false,
+				attrs: {
+					target: "_blank",
+				},
+				badge: undefined,
+			})),
+			collapsed: true,
+			badge: undefined,
+		});
+	}
+
 	return group;
 }
 
@@ -96,9 +124,14 @@ function setSidebarCurrentEntry(
 	pathname: string,
 ): boolean {
 	for (const entry of sidebar) {
-		if (entry.type === "link" && entry.href === pathname) {
-			entry.isCurrent = true;
-			return true;
+		if (entry.type === "link") {
+			const href = entry.href;
+
+			// Compare with and without trailing slash
+			if (href === pathname || href.slice(0, -1) === href) {
+				entry.isCurrent = true;
+				return true;
+			}
 		}
 
 		if (
