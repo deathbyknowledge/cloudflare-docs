@@ -65,21 +65,21 @@ The following example requires Cloudflare provider version `>=4.40.0`.
 
 2.  Configure the [`cloudflare_zero_trust_access_identity_provider`](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/zero_trust_access_identity_provider) resource:
 
-    ```tf
-    resource "cloudflare_zero_trust_access_identity_provider" "generic_saml_example" {
-    	account_id = var.cloudflare_account_id
-    	name       = "Generic SAML example"
-    	type       = "saml"
-    	config {
-    		sso_target_url = "https://example.com/1234/sso/saml"
-    		issuer_url = "https://example.com/1234"
-    		idp_public_cert = "-----BEGIN CERTIFICATE-----\nXXXXX\n-----END CERTIFICATE-----"
-    		sign_request = false
-    		email_attribute_name = "email"
-    		attributes = ["employeeID", "groups"]
-    	}
-    }
-    ```
+        ```tf
+        resource "cloudflare_zero_trust_access_identity_provider" "generic_saml_example" {
+        	account_id = var.cloudflare_account_id
+        	name       = "Generic SAML example"
+        	type       = "saml"
+        	config {
+        		sso_target_url = "https://example.com/1234/sso/saml"
+        		issuer_url = "https://example.com/1234"
+        		idp_public_cert = "-----BEGIN CERTIFICATE-----\nXXXXX\n-----END CERTIFICATE-----"
+        		sign_request = false
+        		email_attribute_name = "email"
+        		attributes = ["employeeID", "groups"]
+        	}
+        }
+        ```
 
 </TabItem> </Tabs>
 
