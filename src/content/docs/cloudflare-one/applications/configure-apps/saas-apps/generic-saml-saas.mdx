@@ -120,9 +120,8 @@ For example, the following JSONata script modifies the `groups` attribute:
   "email": email,
   "gateway_account_id": gateway_account_id,
   "geo": geo,
-  "groups": $map($.groups, function($group) {
-      {"group_name": $group.name, "id": $group.id}
-  }),
+	"groups": $map($.groups, function($group) {
+    {"group_name": $group.name}}),
   "iat": iat,
   "id": id,
   "idp": idp
@@ -177,6 +176,7 @@ Here is an example of an Access for SaaS payload before applying the transform:
     "id": "b08e8c0c-a75d-4b3f-8e7b-cd427b7c7b47",
     "type": "azureAD"
   }
+}
 ```
 
 Here is the payload after applying the example JSONata transform:
@@ -209,16 +209,13 @@ Here is the payload after applying the example JSONata transform:
   },
   "groups": [
     {
-      "group_name": "IdentityProtection-RiskyUser-RiskLevel-low",
-      "id": "62fdf91a-fb4f-41b3-995a-de2f72c61d0e"
+      "group_name": "IdentityProtection-RiskyUser-RiskLevel-low"
     },
     {
-      "group_name": "Global Administrator",
-      "id": "25928f47-8465-4860-a03f-c2a1513f267b"
+      "group_name": "Global Administrator"
     },
     {
-      "group_name": "Application Administrator",
-      "id": "55225980-87d7-4917-b0aa-74c01914c40e"
+      "group_name": "Application Administrator"
     }
   ],
   "iat": 1659474397,
@@ -230,4 +227,4 @@ Here is the payload after applying the example JSONata transform:
 }
 ```
 
-In this example, the JSONata transform changed the `group.name` field from `name` to `group_name`. Additionally, we changed the value of `group.id` from ___ to ____.
+In this example, the JSONata transform changed the `group.name` field from `name` to `group_name` and removed the `group.id` field.
