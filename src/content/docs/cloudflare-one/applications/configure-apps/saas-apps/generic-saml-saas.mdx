@@ -104,7 +104,9 @@ To send additional SAML attributes to your SaaS application, configure the follo
 
 ### Transformation
 
-In **Advanced settings** > **Transformation**, you can enter a [JSONata](https://jsonata.org/) script that modifies SAML attributes before they are sent to the SaaS application. This is useful for setting defaults, excluding email addresses, or ensuring usernames meet arbitrary criteria.
+In **Advanced settings** > **Transformation**, you can enter a [JSONata](https://jsonata.org/) script that modifies a copy of the user identity before creating SAML attributes to be sent to the SaaS application. This is useful for setting defaults, excluding email addresses, or ensuring usernames meet arbitrary criteria.
+
+Note that JSONata Transformations are not compatible with SAML attribute statements. JSONata transformations will override any specified SAML attributes.
 
 For example, the following JSONata script modifies the `groups` attribute:
 
@@ -128,7 +130,7 @@ For example, the following JSONata script modifies the `groups` attribute:
 }
 ```
 
-Here is an example of an Access for SaaS payload before applying the transform:
+Here is an example of a user identity before applying the transform:
 
 ```json title= "Before JSONata transform" collapse={2-25, 40-45}
 {
