@@ -6,18 +6,28 @@ description: >
 date: 2025-03-06T12:00:00Z
 ---
 
+Today, we are thrilled to announce Media Transformations, a new service that
+brings the magic of [Image Transformations](/images/transform-images/) to
+_short-form video files,_ wherever they are stored!
+
 For customers with a huge volume of short video — generative AI output,
 e-commerce product videos, social media clips, or short marketing content —
-uploading those assets to Stream is not always practical. Further, Stream's key
-features like adaptive bitrate encoding and HLS packaging offer diminishing
-returns on short content or small files.
+uploading those assets to Stream is not always practical. Sometimes, the
+greatest friction to getting started was the thought of all that migrating.
+Customers want a simpler solution that retains their current storage strategy to
+deliver small, optimized MP4 files. Now you can do that with Media
+Transformations.
 
-Instead, with Media Transformations, content like this can fetched from
-customers' existing storage like R2 or S3 directly, optimized quickly, and
-delivered efficiently as small MP4 files. Cloudflare Images customers reading
-this will note that this sounds just like their existing Image Transformation
-workflows. Starting today, the same workflow can be applied to your short-form
-videos.
+To transform a video or image,
+[enable transformations](/stream/transform-videos/#getting-started) for your
+zone, then make a simple request with a specially formatted URL. The result is
+an MP4 that can be used in an HTML video element without a player library.
+If your zone already has Image Transformations enabled, then it is ready to
+optimize videos with Media Transformations, too.
+
+``` text title="URL format"
+https://example.com/media/<OPTIONS>/<SOURCE-VIDEO>
+```
 
 (( PLACEHOLDER DEMO ))
 
