@@ -13,7 +13,7 @@ sidebar:
 
 ## x402 Workers and Agents
 
-You can create paywalled endpoints in your Workers and query any x402 server from your agent by wrapping the `fetch` with x402 and your wallet.
+You can create paywalled endpoints in your Workers and query any x402 server from your agent by wrapping the `fetch` with x402 and your account.
 
 ```ts
 import { Hono } from "hono";
@@ -21,28 +21,28 @@ import { Agent, getAgentByName } from "agents";
 import { wrapFetchWithPayment } from "x402-fetch";
 import { paymentMiddleware } from "x402-hono";
 
-// This allows us to create a wallet from just a private key
+// This allows us to derive an account from just the private key
 import { privateKeyToAccount } from "viem/accounts";
 
 // The code below creates an Agent that can fetch the protected route and automatically pay.
-// The agent's wallet must not be empty! You can get test credits
+// The agent's account must not be empty! You can get test credits
 // for base-sepolia here: https://faucet.circle.com/
 export class PayAgent extends Agent<Env> {
 	fetchWithPay!: ReturnType<typeof wrapFetchWithPayment>;
 
 	onStart() {
-		// We instantiate a wallet from which the agent will pay
-		const pk = process.env.CLIENT_TEST_PK as `0x${string}`;
-		const agentAccount = privateKeyToAccount(pk);
-		console.log("Agent will pay from this address:", agentAccount.address);
-		this.fetchWithPay = wrapFetchWithPayment(fetch, agentAccount);
+		// We derive the account from which the agent will pay
+		const privateKey = process.env.CLIENT_TEST_PK as `0x${string}`;
+		const account = privateKeyToAccount(privateKey);
+		console.log("Agent will pay from this address:", account.address);
+		this.fetchWithPay = wrapFetchWithPayment(fetch, account);
 	}
 
 	async onRequest(req: Request) {
 		const url = new URL(req.url);
 		console.log("Trying to fetch paid API");
 
-		// We use the x402 fetch to access our paid endpoint
+		// Use the x402 compatible fetch (fetchWithPay) to access the paid endpoint
 		// Note: this could be any paid endpoint, on any server
 		const paidUrl = new URL("/protected-route", url.origin).toString();
 		return this.fetchWithPay(paidUrl, {});
@@ -55,7 +55,7 @@ const app = new Hono<{ Bindings: Env }>();
 // Only gate the `protected-route` endpoint, everything else we keep free.
 app.use(
 	paymentMiddleware(
-		process.env.SERVER_ADDRESS as `0x${string}`, // our server wallet address
+		process.env.SERVER_ADDRESS as `0x${string}`, // our server's public address
 		{
 			"/protected-route": {
 				price: "$0.10",
@@ -66,6 +66,7 @@ app.use(
 			},
 		},
 		{ url: "https://x402.org/facilitator" }, // Payment facilitator URL
+		// To learn more about facilitators https://x402.gitbook.io/x402/core-concepts/facilitator
 	),
 );
 
@@ -100,6 +101,7 @@ const X402_CONFIG: X402Config = {
 	network: "base",
 	recipient: env.MCP_ADDRESS,
 	facilitator: { url: "https://x402.org/facilitator" }, // Payment facilitator URL
+	// To learn more about facilitators https://x402.gitbook.io/x402/core-concepts/facilitator
 };
 
 export class PaidMCP extends McpAgent<Env> {
@@ -155,13 +157,13 @@ export class MyAgent extends Agent {
 	}
 
 	onPaymentRequired(paymentRequirements): Promise<boolean> {
-		// Your HIL confirmation flow...
+		// Your human-in-the-loop confirmation flow...
 	}
 
-	async onToolCall() {
+	async onToolCall(toolName: string, toolArgs: unknown) {
 		// The first parameter becomes the confirmation callback.
 		// We can set it to `null` if we want the agent to pay automatically.
-		const res = await this.x402Client.callTool(this.onPaymentRequired, {
+		return await this.x402Client.callTool(this.onPaymentRequired, {
 			name: toolName,
 			arguments: toolArgs,
 		});
