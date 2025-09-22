@@ -24,7 +24,7 @@ import { paymentMiddleware } from "x402-hono";
 // This allows us to create a wallet from just a private key
 import { privateKeyToAccount } from "viem/accounts";
 
-// We create an Agent that can fetch the protected route and automatically pay.
+// The code below creates an Agent that can fetch the protected route and automatically pay.
 // The agent's wallet must not be empty! You can get test credits
 // for base-sepolia here: https://faucet.circle.com/
 export class PayAgent extends Agent<Env> {
