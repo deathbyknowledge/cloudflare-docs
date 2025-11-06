@@ -1,0 +1,673 @@
+---
+pcx_content_type: concept
+title: Build a Slack Agent
+sidebar:
+  order: 5
+---
+
+import { Details, Render, PackageManagers, WranglerConfig } from "~/components";
+
+## Deploy your first Slack Agent
+
+This guide will show you how to build and deploy an AI-powered Slack bot on Cloudflare Workers that can:
+
+- Respond to direct messages
+- Reply when mentioned in channels
+- Maintain conversation context in threads
+- Use AI to generate intelligent responses
+
+Your Slack Agent will be a multi-tenant application, meaning a single deployment can serve multiple Slack workspaces. Each workspace gets its own isolated agent instance with dedicated storage, powered by the [Agents SDK](/agents/).
+
+You can view the full code for this example [here](https://github.com/cloudflare/awesome-agents/tree/69963298b359ddd66331e8b3b378bb9ae666629f/agents/slack);
+
+## Prerequisites
+
+Before you begin, you'll need:
+
+- A [Cloudflare account](https://dash.cloudflare.com/sign-up)
+- [Node.js](https://nodejs.org/) installed (v18 or later)
+- A [Slack workspace](https://slack.com/create) where you have permission to install apps
+- An [OpenAI API key](https://platform.openai.com/api-keys) (or another LLM provider)
+
+## Step 1 — Create a Slack App
+
+First, create a new Slack App that your agent will use to interact with Slack:
+
+1. Navigate to [api.slack.com/apps](https://api.slack.com/apps) and click **Create New App**
+2. Select **From scratch**
+3. Give your app a name (e.g., "My AI Assistant") and select your workspace
+4. Click **Create App**
+
+### Configure OAuth & Permissions
+
+In your Slack App settings, navigate to **OAuth & Permissions** and add the following **Bot Token Scopes**:
+
+- `chat:write` — Send messages as the bot
+- `chat:write.public` — Send messages to channels without joining
+- `channels:history` — View messages in public channels
+- `app_mentions:read` — Receive mentions
+- `im:write` — Send direct messages
+- `im:history` — View direct message history
+
+### Enable Event Subscriptions
+
+You'll configure the Event Subscriptions URL after deploying your agent, but for now, navigate to **Event Subscriptions** in your Slack App settings and prepare to enable it. You'll need to subscribe to these bot events:
+
+- `app_mention` — When the bot is @mentioned
+- `message.im` — Direct messages to the bot
+
+Don't enable it yet — we'll come back to this after deployment.
+
+### Get your Slack credentials
+
+From your Slack App settings, collect these values:
+
+1. **Basic Information** → **App Credentials**:
+   - **Client ID**
+   - **Client Secret**
+   - **Signing Secret**
+
+Keep these handy — you'll need them in the next step.
+
+## Step 2 — Create your Slack Agent project
+
+Create a new project for your Slack Agent:
+
+<PackageManagers
+	type="create"
+	pkg="cloudflare@latest"
+	args={"my-slack-agent"}
+/>
+
+Navigate into your project:
+
+```sh
+cd my-slack-agent
+```
+
+Install the required dependencies:
+
+```sh
+npm install agents openai
+```
+
+## Step 3 — Set up your environment variables
+
+Create a `.dev.vars` file in your project root for local development secrets:
+
+```sh
+touch .dev.vars
+```
+
+Add your credentials to `.dev.vars`:
+
+```sh
+SLACK_CLIENT_ID="your-slack-client-id"
+SLACK_CLIENT_SECRET="your-slack-client-secret"
+SLACK_SIGNING_SECRET="your-slack-signing-secret"
+OPENAI_API_KEY="your-openai-api-key"
+OPENAI_BASE_URL="https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT_ID/YOUR_GATEWAY/openai"
+```
+
+:::note
+The `OPENAI_BASE_URL` is optional but recommended. Using [Cloudflare AI Gateway](/ai-gateway/) gives you caching, rate limiting, and analytics for your AI requests.
+:::
+
+Update your `wrangler.jsonc` to configure your Agent:
+
+<WranglerConfig>
+```toml
+name = "my-slack-agent"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[durable_objects.bindings]]
+name = "MyAgent"
+class_name = "MyAgent"
+script_name = "my-slack-agent"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["MyAgent"]
+```
+</WranglerConfig>
+
+## Step 4 — Create your Slack Agent
+
+Create the base Slack Agent class at `src/slack.ts`:
+
+```ts
+import { Agent, getAgentByName } from "agents";
+import { env as cfEnv } from "cloudflare:workers";
+
+interface ServeOptions {
+  clientId: string;
+  clientSecret: string;
+  scopes: string[];
+  baseUrl?: string;
+  slackSigningSecret: string;
+}
+
+async function verify(secret: string, ts: string, raw: string, sig: string) {
+  if (!ts || !sig) return false;
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - Number(ts)) > 300) return false; // replay guard
+
+  const base = `v0:${ts}:${raw}`;
+  const expected = await hmacSHA256(secret, base);
+  return timingSafeEqual(`v0=${expected}`, sig);
+}
+
+async function hmacSHA256(key: string, msg: string) {
+  const enc = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(key),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(msg));
+  return [...new Uint8Array(sig)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string) {
+  const A = new TextEncoder().encode(a);
+  const B = new TextEncoder().encode(b);
+  if (A.length !== B.length) return false;
+  let diff = 0;
+  for (let i = 0; i < A.length; i++) diff |= A[i] ^ B[i];
+  return diff === 0;
+}
+
+type SlackMsg = {
+  user?: string;
+  text?: string;
+  ts: string;
+  thread_ts?: string;
+  subtype?: string;
+  bot_id?: string;
+};
+
+export class SlackAgent extends Agent {
+  get token() {
+    return this.ctx.storage.kv.get("slack_token");
+  }
+
+  init(token: string) {
+    this.ctx.storage.kv.put("slack_token", token);
+  }
+
+  protected appUserId?: string;
+
+  async ensureAppUserId() {
+    if (this.appUserId) return this.appUserId;
+    const res = await fetch("https://slack.com/api/auth.test", {
+      headers: { Authorization: `Bearer ${this.token}` }
+    });
+    const json = await res.json<{ user_id?: string }>();
+    this.appUserId = json.user_id || "UNKNOWN";
+    return this.appUserId;
+  }
+
+  async onSlackEvent(event: { type: string } & Record<string, unknown>) {
+    throw new Error(
+      "Received slack event but you haven't overridden onSlackEvent"
+    );
+  }
+
+  async sendMessage(message: string, opts: Record<string, unknown>) {
+    const res = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({ text: message, ...opts })
+    });
+    if (!res.ok) console.error("Slack API HTTP", res.status, await res.text());
+  }
+
+  async fetchThread(channel: string, rootTs: string, oldest?: string) {
+    const params = new URLSearchParams({
+      channel,
+      ts: rootTs,
+      limit: "1000",
+      inclusive: "true"
+    });
+    if (oldest) params.set("oldest", oldest);
+    const res = await fetch(
+      "https://slack.com/api/conversations.replies?" + params.toString(),
+      {
+        headers: { Authorization: `Bearer ${this.token}` }
+      }
+    );
+    const data = await res.json<{ ok: boolean; messages: SlackMsg[] }>();
+    if (!data.ok) throw new Error("Failed to read thread");
+    return data.messages.sort((a, b) => Number(a.ts) - Number(b.ts));
+  }
+
+  async fetchConversation(channel: string, oldest?: string) {
+    const params = new URLSearchParams({
+      channel,
+      limit: "1000"
+    });
+    if (oldest) params.set("oldest", oldest);
+    const res = await fetch(
+      "https://slack.com/api/conversations.history?" + params.toString(),
+      {
+        headers: { Authorization: `Bearer ${this.token}` }
+      }
+    );
+    const data = await res.json<{ ok: boolean; messages: SlackMsg[] }>();
+    if (!data.ok) throw new Error("Failed to read thread");
+    return data.messages.sort((a, b) => Number(a.ts) - Number(b.ts));
+  }
+
+  static listen({
+    clientId,
+    clientSecret,
+    scopes,
+    baseUrl,
+    slackSigningSecret
+  }: ServeOptions) {
+    let prefix = baseUrl ?? "";
+    return {
+      async fetch(request: Request, env: typeof cfEnv, ctx: ExecutionContext) {
+        const url = new URL(request.url);
+        if (!url.pathname.startsWith(prefix))
+          return new Response("Not found", { status: 404 });
+
+        // OAuth install flow
+        if (url.pathname === `${prefix}/install`) {
+          const installUrl = new URL("https://slack.com/oauth/v2/authorize");
+          installUrl.searchParams.set("client_id", clientId);
+          installUrl.searchParams.set("scope", scopes.join(","));
+
+          const redirectUri = "https://" + url.host + prefix + "/accept";
+          installUrl.searchParams.set("redirect_uri", redirectUri);
+
+          return new Response(null, {
+            status: 301,
+            headers: { Location: installUrl.toString() }
+          });
+        }
+
+        // OAuth callback
+        if (url.pathname === `${prefix}/accept`) {
+          const code = url.searchParams.get("code");
+          if (!code) return new Response("Missing code param", { status: 400 });
+
+          const formData = new FormData();
+          formData.append("code", code);
+          formData.append("client_id", clientId);
+          formData.append("client_secret", clientSecret);
+          const redirectUri = "https://" + url.host + prefix + "/accept";
+          formData.append("redirect_uri", redirectUri);
+
+          const response = await fetch(
+            "https://slack.com/api/oauth.v2.access?redirect_uri=" + redirectUri,
+            {
+              method: "POST",
+              body: formData
+            }
+          );
+
+          const data = await response.json<{
+            team?: { id: string };
+            access_token: string;
+          }>();
+          const teamId = data.team?.id;
+          if (!teamId) return new Response("Missing team id", { status: 400 });
+
+          const agent = await getAgentByName(env.MyAgent, teamId);
+          agent.init(data.access_token);
+          return new Response("Successfully registered!", { status: 200 });
+        }
+
+        // Slack Events API endpoint
+        if (url.pathname === `${prefix}/slack`) {
+          const raw = await request.text();
+
+          // Verify Slack signature
+          const ts = request.headers.get("X-Slack-Request-Timestamp");
+          const sig = request.headers.get("X-Slack-Signature");
+          if (!(await verify(slackSigningSecret, ts || "", raw, sig || ""))) {
+            return new Response("bad sig", { status: 401 });
+          }
+
+          const ct = request.headers.get("Content-Type") || "";
+          if (!ct.includes("application/json"))
+            return new Response("", { status: 200 });
+
+          const body = JSON.parse(raw);
+
+          // Slack's URL verification challenge
+          if (body.type === "url_verification") {
+            return Response.json({ challenge: body.challenge });
+          }
+
+          if (!body.team_id)
+            return new Response("Missing team id", { status: 400 });
+
+          const agent = await getAgentByName(env.MyAgent, body.team_id);
+          agent.onSlackEvent(body.event);
+          return new Response("OK");
+        }
+
+        return new Response("Not found", { status: 404 });
+      }
+    };
+  }
+}
+```
+
+Now create your agent implementation at `src/index.ts`:
+
+```ts
+import { env } from "cloudflare:workers";
+import { SlackAgent } from "./slack";
+import { OpenAI } from "openai";
+
+const openai = new OpenAI({
+  apiKey: env.OPENAI_API_KEY,
+  baseURL: env.OPENAI_BASE_URL
+});
+
+type SlackMsg = {
+  user?: string;
+  text?: string;
+  ts: string;
+  thread_ts?: string;
+  subtype?: string;
+  bot_id?: string;
+};
+
+function normalizeForLLM(msgs: SlackMsg[], selfUserId: string) {
+  return msgs.map((m) => {
+    const role = m.user && m.user !== selfUserId ? "user" : "assistant";
+    const text = (m.text ?? "").replace(/<@([A-Z0-9]+)>/g, "@$1");
+    return { role, content: text };
+  });
+}
+
+export class MyAgent extends SlackAgent {
+  async generateAIReply(conversation: SlackMsg[]) {
+    const selfId = await this.ensureAppUserId();
+    const messages = normalizeForLLM(conversation, selfId);
+
+    const system = `You are a helpful AI assistant in Slack.
+Be brief, specific, and actionable. If you're unsure, ask a single clarifying question.`;
+
+    const input = [{ role: "system", content: system }, ...messages];
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: input
+    });
+
+    const msg = response.choices[0].message.content;
+    if (!msg) throw new Error("No message from AI");
+
+    return msg;
+  }
+
+  async onSlackEvent(event: { type: string } & Record<string, unknown>) {
+    // Ignore bot messages and subtypes (edits, joins, etc.)
+    if (event.bot_id || event.subtype) return;
+
+    // Handle direct messages
+    if (event.type === "message") {
+      const e = event as unknown as SlackMsg & { channel: string };
+      const isDM = (e.channel || "").startsWith("D");
+      const mentioned = (e.text || "").includes(
+        `<@${await this.ensureAppUserId()}>`
+      );
+
+      if (!isDM && !mentioned) return;
+
+      const conversation = await this.fetchConversation(e.channel);
+      const content = await this.generateAIReply(conversation);
+      await this.sendMessage(content, { channel: e.channel });
+      return;
+    }
+
+    // Handle @mentions in channels
+    if (event.type === "app_mention") {
+      const e = event as unknown as SlackMsg & {
+        channel: string;
+        text?: string;
+      };
+      const thread = await this.fetchThread(e.channel, e.thread_ts || e.ts);
+      const content = await this.generateAIReply(thread);
+      await this.sendMessage(content, {
+        channel: e.channel,
+        thread_ts: e.thread_ts || e.ts
+      });
+      return;
+    }
+  }
+}
+
+export default MyAgent.listen({
+  clientId: env.SLACK_CLIENT_ID,
+  clientSecret: env.SLACK_CLIENT_SECRET,
+  slackSigningSecret: env.SLACK_SIGNING_SECRET,
+  scopes: [
+    "chat:write",
+    "chat:write.public",
+    "channels:history",
+    "app_mentions:read",
+    "im:write",
+    "im:history"
+  ]
+});
+```
+
+## Step 5 — Test locally
+
+Start your development server:
+
+```sh
+npm run dev
+```
+
+Your agent is now running at `http://localhost:8787`.
+
+### Configure Slack Event Subscriptions
+
+Now that your agent is running locally, you need to expose it to Slack. Use [Cloudflare Tunnel](/cloudflare-one/connections/connect-networks/) to create a secure tunnel:
+
+```sh
+npx cloudflared tunnel --url http://localhost:8787
+```
+
+This will output a public URL like `https://random-subdomain.trycloudflare.com`.
+
+Go back to your Slack App settings:
+
+1. Navigate to **Event Subscriptions**
+2. Toggle **Enable Events** to **On**
+3. Enter your Request URL: `https://random-subdomain.trycloudflare.com/slack`
+4. Slack will send a verification request — if your agent is running correctly, it should show **Verified** ✓
+
+5. Under **Subscribe to bot events**, add:
+   - `app_mention`
+   - `message.im`
+
+6. Click **Save Changes**
+
+:::note
+Cloudflare Tunnel URLs are temporary. When testing locally, you'll need to update the Request URL each time you restart the tunnel.
+:::
+
+### Install your app to Slack
+
+Visit `http://localhost:8787/install` in your browser. This will redirect you to Slack's authorization page. Click **Allow** to install the app to your workspace.
+
+After authorization, you should see "Successfully registered!" in your browser.
+
+### Test your agent
+
+Open Slack and:
+
+1. **Send a DM** to your bot — it should respond with an AI-generated message
+2. **Mention your bot** in a channel (e.g., `@My AI Assistant hello`) — it should reply in a thread
+
+If everything works, you're ready to deploy to production!
+
+## Step 6 — Deploy to production
+
+Before deploying, add your secrets to Cloudflare:
+
+```sh
+npx wrangler secret put SLACK_CLIENT_ID
+npx wrangler secret put SLACK_CLIENT_SECRET
+npx wrangler secret put SLACK_SIGNING_SECRET
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put OPENAI_BASE_URL
+```
+
+:::note
+You can skip `OPENAI_BASE_URL` if you're not using AI Gateway.
+:::
+
+Deploy your agent:
+
+```sh
+npx wrangler deploy
+```
+
+After deploying, you'll get a production URL like:
+
+```
+https://my-slack-agent.your-account.workers.dev
+```
+
+### Update Slack Event Subscriptions
+
+Go back to your Slack App settings:
+
+1. Navigate to **Event Subscriptions**
+2. Update the Request URL to your production URL: `https://my-slack-agent.your-account.workers.dev/slack`
+3. Click **Save Changes**
+
+### Distribute your app
+
+Now that your agent is deployed, you can share it with others:
+
+- **Single workspace**: Just install it via `https://my-slack-agent.your-account.workers.dev/install`
+- **Public distribution**: Submit your app to the [Slack App Directory](https://api.slack.com/start/distributing)
+
+Each workspace that installs your app will get its own isolated agent instance with dedicated storage.
+
+## How it works
+
+### Multi-tenancy with Durable Objects
+
+Your Slack Agent uses [Durable Objects](/durable-objects/) to provide isolated, stateful instances for each Slack workspace:
+
+- Each workspace's `team_id` is used as the Durable Object ID
+- Each agent instance stores its own Slack access token in KV storage
+- Conversations are fetched on-demand from Slack's API
+- All agent logic runs in an isolated, consistent environment
+
+### OAuth flow
+
+The agent handles Slack's OAuth 2.0 flow:
+
+1. User visits `/install` → redirected to Slack authorization
+2. User clicks "Allow" → Slack redirects to `/accept` with an authorization code
+3. Agent exchanges code for access token
+4. Agent stores token in the workspace's Durable Object
+
+### Event handling
+
+When Slack sends an event:
+
+1. Request arrives at `/slack` endpoint
+2. Agent verifies the request signature using HMAC-SHA256
+3. Agent routes the event to the correct workspace's Durable Object
+4. `onSlackEvent` method processes the event and generates a response
+
+## Customizing your agent
+
+### Change the AI model
+
+Update the model in `src/index.ts`:
+
+```ts
+const response = await openai.chat.completions.create({
+  model: "gpt-4o", // or any other model
+  messages: input
+});
+```
+
+### Add conversation memory
+
+Store conversation history in Durable Object storage:
+
+```ts
+async storeMessage(channel: string, message: SlackMsg) {
+  const history = await this.ctx.storage.kv.get(`history:${channel}`) || [];
+  history.push(message);
+  await this.ctx.storage.kv.put(`history:${channel}`, history);
+}
+```
+
+### React to specific keywords
+
+Add custom logic in `onSlackEvent`:
+
+```ts
+async onSlackEvent(event: { type: string } & Record<string, unknown>) {
+  if (event.type === "message") {
+    const e = event as unknown as SlackMsg & { channel: string };
+
+    if (e.text?.includes("help")) {
+      await this.sendMessage("Here's how I can help...", {
+        channel: e.channel
+      });
+      return;
+    }
+  }
+
+  // ... rest of your event handling
+}
+```
+
+### Use different LLM providers
+
+Replace OpenAI with [Workers AI](/workers-ai/):
+
+```ts
+import { Ai } from "@cloudflare/ai";
+
+export class MyAgent extends SlackAgent {
+  async generateAIReply(conversation: SlackMsg[]) {
+    const ai = new Ai(this.ctx.env.AI);
+    const response = await ai.run("@cf/meta/llama-3-8b-instruct", {
+      messages: normalizeForLLM(conversation, await this.ensureAppUserId())
+    });
+    return response.response;
+  }
+}
+```
+
+## Next steps
+
+- Add [Slack Interactive Components](https://api.slack.com/interactivity) (buttons, modals)
+- Connect your Agent to an [MCP server](/agents/model-context-protocol/mcp-client-api/).
+- Add rate limiting to prevent abuse
+- Implement conversation state management
+- Use [Workers Analytics Engine](/analytics/analytics-engine/) to track usage
+- Add [schedules](/agents/api-reference/schedule-tasks/) for scheduled tasks
+
+## Related resources
+
+- [Agents Framework documentation](/agents/)
+- [Durable Objects documentation](/durable-objects/)
+- [Slack API documentation](https://api.slack.com/)
+- [OpenAI API documentation](https://platform.openai.com/docs/)
