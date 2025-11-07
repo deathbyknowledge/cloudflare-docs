@@ -1,6 +1,6 @@
 ---
-pcx_content_type: concept
-title: Build a ChatGPT App
+pcx_content_type: tutorial
+title: Build an Interactive ChatGPT App
 sidebar:
   order: 6
 ---
@@ -16,7 +16,7 @@ This guide will show you how to build and deploy an interactive ChatGPT App on C
 - Enable bidirectional communication between your app and ChatGPT
 - Build multiplayer experiences that run entirely within ChatGPT
 
-You'll build a **real-time multiplayer chess game** that demonstrates these capabilities. Players can start or join games, make moves on an interactive chessboard, and even ask ChatGPT for strategic advice—all without leaving the conversation.
+You will build a real-time multiplayer chess game that demonstrates these capabilities. Players can start or join games, make moves on an interactive chessboard, and even ask ChatGPT for strategic advice—all without leaving the conversation.
 
 Your ChatGPT App will use the **Model Context Protocol (MCP)** to expose tools and UI resources that ChatGPT can invoke on your behalf.
 
@@ -24,26 +24,26 @@ You can view the full code for this example [here](https://github.com/cloudflare
 
 ## Prerequisites
 
-Before you begin, you'll need:
+Before you begin, you will need:
 
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Node.js](https://nodejs.org/) installed (v18 or later)
 - A [ChatGPT Plus or Team account](https://chat.openai.com/) with developer mode enabled
 - Basic knowledge of React and TypeScript
 
-## Step 1 — Enable ChatGPT Developer Mode
+## 1. Enable ChatGPT Developer Mode
 
 To use ChatGPT Apps (also called connectors), you need to enable developer mode:
 
-1. Open [ChatGPT](https://chat.openai.com/)
-2. Navigate to **Settings** → **Apps & Connectors** → **Advanced Settings**
+1. Open [ChatGPT](https://chat.openai.com/).
+2. Go to **Settings** > **Apps & Connectors** > **Advanced Settings**
 3. Toggle **Developer mode ON**
 
-Once enabled, you'll be able to install custom apps during development and testing.
+Once enabled, you will be able to install custom apps during development and testing.
 
-## Step 2 — Create your ChatGPT App project
+## 2. Create your ChatGPT App project
 
-Create a new project for your Chess App:
+1. Create a new project for your Chess App:
 
 <PackageManagers
 	type="create"
@@ -51,27 +51,27 @@ Create a new project for your Chess App:
 	args={"my-chess-app"}
 />
 
-Navigate into your project:
+2. Navigate into your project:
 
 ```sh
 cd my-chess-app
 ```
 
-Install the required dependencies:
+3. Install the required dependencies:
 
 ```sh
 npm install agents @modelcontextprotocol/sdk chess.js react react-dom react-chessboard
 ```
 
-Install development dependencies:
+4. Install development dependencies:
 
 ```sh
 npm install -D @cloudflare/vite-plugin @vitejs/plugin-react vite vite-plugin-singlefile @types/react @types/react-dom
 ```
 
-## Step 3 — Configure your project
+## 3. Configure your project
 
-Update your `wrangler.jsonc` to configure Durable Objects and assets:
+1. Update your `wrangler.jsonc` to configure Durable Objects and assets:
 
 <WranglerConfig>
 
@@ -103,7 +103,7 @@ Update your `wrangler.jsonc` to configure Durable Objects and assets:
 ```
 </WranglerConfig>
 
-Create a `vite.config.ts` for building your React UI:
+2. Create a `vite.config.ts` for building your React UI:
 
 ```ts
 import { cloudflare } from "@cloudflare/vite-plugin";
@@ -119,7 +119,7 @@ export default defineConfig({
 });
 ```
 
-Update your `package.json` scripts:
+3. Update your `package.json` scripts:
 
 ```json
 {
@@ -131,9 +131,9 @@ Update your `package.json` scripts:
 }
 ```
 
-## Step 4 — Create the Chess game engine
+## 4. Create the Chess game engine
 
-Create the game logic using Durable Objects at `src/chess.tsx`:
+1. Create the game logic using Durable Objects at `src/chess.tsx`:
 
 ```tsx
 import { Agent, callable, getCurrentAgent } from "agents";
@@ -294,9 +294,9 @@ export class ChessGame extends Agent<Env, State> {
 }
 ```
 
-## Step 5 — Create the MCP server and UI resource
+## 5. Create the MCP server and UI resource
 
-Create your main worker at `src/index.ts`:
+1. Create your main worker at `src/index.ts`:
 
 ```ts
 import { createMcpHandler } from "agents/mcp";
@@ -369,9 +369,9 @@ export default {
 export { ChessGame } from "./chess";
 ```
 
-## Step 6 — Build the React UI
+## 6. Build the React UI
 
-Create the HTML entry point at `index.html`:
+1. Create the HTML entry point at `index.html`:
 
 ```html
 <!doctype html>
@@ -386,7 +386,7 @@ Create the HTML entry point at `index.html`:
 </html>
 ```
 
-Create the React app at `src/app.tsx`:
+2. Create the React app at `src/app.tsx`:
 
 ```tsx
 import { useEffect, useRef, useState } from "react";
@@ -565,9 +565,9 @@ root.render(<App />);
 This is a simplified version of the UI. For the complete implementation with player slots, better styling, and game state management, check out the [full example on GitHub](https://github.com/cloudflare/agents/tree/main/openai-sdk/chess-app/src/app.tsx).
 :::
 
-## Step 7 — Build and deploy
+## 7. Build and deploy
 
-Build your React UI:
+1. Build your React UI:
 
 ```sh
 npm run build
@@ -575,50 +575,50 @@ npm run build
 
 This compiles your React app into a single HTML file in the `dist` directory.
 
-Deploy to Cloudflare:
+2. Deploy to Cloudflare:
 
 ```sh
 npx wrangler deploy
 ```
 
-After deployment, you'll see your app URL:
+After deployment, you will see your app URL:
 
 ```
 https://my-chess-app.YOUR_SUBDOMAIN.workers.dev
 ```
 
-## Step 8 — Connect to ChatGPT
+## 8. Connect to ChatGPT
 
 Now connect your deployed app to ChatGPT:
 
-1. Open [ChatGPT](https://chat.openai.com/)
-2. Navigate to **Settings** → **Apps & Connectors** → **Create**
-3. Give your app a **name**, and optionally a **descripton** and **icon**.
+1. Open [ChatGPT](https://chat.openai.com/).
+2. Go to **Settings** > **Apps & Connectors** > **Create**
+3. Give your app a **name**, and optionally a **description** and **icon**.
 4. Enter your MCP endpoint: `https://my-chess-app.YOUR_SUBDOMAIN.workers.dev/mcp`.
-5. Select **"No authentication"**
-6. Click **"Create"**
+5. Select **"No authentication"**.
+6. Select **"Create"**.
 
-## Step 9 — Play chess in ChatGPT
+## 9. Play chess in ChatGPT
 
 Try it out:
 
-1. In your ChatGPT conversation, type: **"Let's play chess"**
-2. ChatGPT will call the `playChess` tool and render your interactive chess widget
-3. Click **"Start a new game"** to create a game
-4. Share the game ID with a friend who can join via their own ChatGPT conversation
-5. Make moves by dragging pieces on the board
-6. Click **"Ask for help"** to get strategic advice from ChatGPT
+1. In your ChatGPT conversation, type: "Let's play chess".
+2. ChatGPT will call the `playChess` tool and render your interactive chess widget.
+3. Select **"Start a new game"** to create a game.
+4. Share the game ID with a friend who can join via their own ChatGPT conversation.
+5. Make moves by dragging pieces on the board.
+6. Select **"Ask for help"** to get strategic advice from ChatGPT
 
 
 :::note
-You might need to manually select the connector in the prompt box the first time you use it. Click **"+"** -> **"More"** -> **[App name]**.
+You might need to manually select the connector in the prompt box the first time you use it. Select **"+"** > **"More"** > **[App name]**.
 :::
 
 ## Key concepts
 
 ### MCP Server
 
-The **Model Context Protocol (MCP)** server defines tools and resources that ChatGPT can access:
+The Model Context Protocol (MCP) server defines tools and resources that ChatGPT can access:
 
 ```ts
 const server = new McpServer({ name: "Chess", version: "v1.0.0" });
@@ -768,8 +768,8 @@ This creates a new message in the ChatGPT conversation with context about the cu
 
 Now that you have a working ChatGPT App, you can:
 
-- **Add more tools** — Expose additional capabilities and UIs through MCP tools and resources.
-- **Enhance the UI** — Build more sophisticated interfaces with React
+- Add more tools: Expose additional capabilities and UIs through MCP tools and resources.
+- Enhance the UI: Build more sophisticated interfaces with React.
 
 ## Related resources
 
