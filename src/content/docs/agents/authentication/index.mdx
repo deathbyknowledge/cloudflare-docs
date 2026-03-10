@@ -42,13 +42,13 @@ Your Worker's `fetch` handler acts as a gatekeeper. Whether you validate a stati
 
 - **Authenticate before the Agent.** Handle authentication in your Worker's `fetch` handler or middleware, not inside the Agent's `onConnect` or `onRequest` methods. This prevents unauthenticated requests from reaching the Durable Object.
 - **Use short-lived tokens for WebSockets.** WebSocket upgrade requests cannot include custom headers. Pass tokens as query parameters, and keep them short-lived (minutes, not hours) to limit exposure.
-- **Name Agents by user identity.** Use the authenticated user's ID as the Agent instance name. This ensures each user gets their own Agent and makes routing deterministic. See [Naming your Agents](/agents/api-reference/calling-agents/#naming-your-agents) for more.
+- **Name Agents by user identity.** Use the authenticated user's ID as the Agent instance name. This ensures each user gets their own Agent and makes routing deterministic. See [Instance naming patterns](/agents/api-reference/routing/#instance-naming-patterns) for more.
 - **Handle token expiration on the client.** Check for expired tokens when a WebSocket disconnects. If the token is expired, redirect the user to sign in again rather than attempting to reconnect.
 - **Return consistent error responses.** Always return a `401 Unauthorized` with a JSON body for invalid credentials. This makes it easier for clients to detect and handle auth failures programmatically.
 
 ## Related resources
 
-- [Calling Agents](/agents/api-reference/calling-agents/) — `routeAgentRequest` and `getAgentByName` API reference
+- [Routing](/agents/api-reference/routing/) — `routeAgentRequest` and `getAgentByName` API reference
 - [MCP Authorization](/agents/model-context-protocol/authorization/) — OAuth 2.1 authorization for MCP servers
 - [Workers OAuth Provider](https://github.com/cloudflare/workers-oauth-provider) — OAuth 2.1 provider library for Workers
 - [Better Auth](https://www.better-auth.com/) — Full-stack authentication library
